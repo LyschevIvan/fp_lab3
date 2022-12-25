@@ -39,4 +39,4 @@ jobs:
            fantomas Tests.fs
            fantomas Lab3.fs
     - name: Test
-      run: dotnet test --no-build --verbosity normal
+      run: dotnet test --no-build --logger:"console;verbosity=detailed"
