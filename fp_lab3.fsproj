@@ -12,7 +12,6 @@
         <Compile Include="Lab3.fs" />
         <Compile Include="Tests.fs" />
         <Compile Include="Program.fs" />
-        <Content Include="input.txt" />
     </ItemGroup>
 
     <ItemGroup>

@@ -9,7 +9,7 @@ let rec handleInput pList =
     if (not (isNull line) && line <> "") then
         let data = line.Split(";")
 
-        if data.Length >= 2 then
+        if data.Length >= 2 && data[1] <> "" then
             let x = double data[0]
             let y = double data[1]
 
@@ -82,32 +82,43 @@ let logarifm (points: list<double * double>) : double -> double =
     let f x = a * log x + b
     f
 
-let getFunc (funcId: string) points : double -> double =
+let getFunc (funcId: int) points : double -> double =
     match funcId with
-    | "0" -> linear points
-    | "1" -> segment points
-    | "2" -> logarifm points
+    | 1 -> segment points
+    | 2 -> logarifm points
     | _ -> linear points
-
+let getFuncName (funcId: int) : string =
+    match funcId with
+    | 1 -> "Сегментная аппроксимация"
+    | 2 -> "Логарифмическая аппроксимация"
+    | _ -> "Линейная аппроксимация"
 let getPointGen (a: double) (b: double) (n: int) =
     let mult = (b - a) / (double n)
     let getPoint (i: int) = a + (double i) * mult
     getPoint
 
-let printValues (f: double -> double) (pointGen: int -> double) count =
-    [ 0..count ]
-    |> List.map (fun i -> printfn $"x: %8.4f{pointGen i}, y: %8.4f{f (pointGen i)}")
+let printValues (funcs: ((double -> double) * int)[]) (pointGen: int -> double) count =
+    funcs
+    |> Array.map (fun fWithId ->
+        let f, id = fWithId
+        printfn $"{getFuncName id} : "
+        [ 0..count ]
+        |> List.map (fun i ->
+            printfn $"x: %8.4f{pointGen i}, y: %8.4f{f (pointGen i)}")
+        |> ignore
+
+        printfn "———————————————————————————")
     |> ignore
 
-let rec processOneFuncRec funcId a b n points func =
-    let new_points = handleInput points
+let rec processFuncsRec (funcIds: int[]) a b n points (funcs: (double -> double)[]) =
+    let newPoints = handleInput points
 
-    if (new_points <> points) then
-        let f = getFunc funcId points
-        processOneFuncRec funcId a b n new_points f
+    if (newPoints <> points) then
+        let funcsArr = funcIds |> Array.map (fun funcId -> getFunc funcId newPoints)
+        processFuncsRec funcIds a b n newPoints funcsArr
     else if (points <> []) then
         let pointGen = getPointGen a b n
-        printValues func pointGen n
+        printValues (Array.zip funcs funcIds) pointGen n
 
-let rec processOneFunc funcId a b n points =
-    processOneFuncRec funcId a b n points (fun _ -> 0.)
+let rec processFuncs funcIds a b n =
+    processFuncsRec funcIds a b n [] Array.empty<double -> double>

@@ -9,38 +9,44 @@
 Функция читает из стандартного потока пока не будет пустая строка. 
 В результате получаем список пар (x,y) 
 ```f#
-let handleInput =
-    let points = List.Empty
+let rec handleInput pList =
+    let line = Console.ReadLine()
 
-    let rec handler pList =
-        let line = Console.ReadLine()
+    if (not (isNull line) && line <> "") then
+        let data = line.Split(";")
 
-        if (not (isNull line) && line <> "") then
-            let data = line.Split(";")
+        if data.Length >= 2 then
+            let x = double data[0]
+            let y = double data[1]
 
-            if data.Length >= 2 then
-                let x = double data[0]
-                let y = double data[1]
+            match pList with
+            | [] -> [ (x, y) ]
+            | _ -> (x, y) :: pList
 
-                handler (
-                    match pList with
-                    | [] -> [ (x, y) ]
-                    | _ -> (x, y) :: pList
-                )
-            else
-                handler pList
         else
-            pList
+            handleInput pList
+    else
+        pList
+```
+Полученный список точек обрабатывается, вычисляется функция. Ожидается ввод новой пары чисел и алгоритм повторяется.\
+Вывод значений осуществляется после окончания ввода.
+```f#
+let rec processFuncsRec (funcIds: int[]) a b n points (funcs: (double -> double)[]) =
+    let newPoints = handleInput points
 
-    handler points
+    if (newPoints <> points) then
+        let funcsArr = funcIds |> Array.map (fun funcId -> getFunc funcId newPoints)
+        processFuncsRec funcIds a b n newPoints funcsArr
+    else if (points <> []) then
+        let pointGen = getPointGen a b n
+        printValues (Array.zip funcs funcIds) pointGen n
 ```
 В зависимости от аргументов командной строки, выбирается аппроксимирующая функция
 ```f#
-let getFunc (funcId: string) points : double -> double =
+let getFunc (funcId: int) points : double -> double =
     match funcId with
-    | "0" -> linear points
-    | "1" -> segment points
-    | "2" -> logarifm points
+    | 1 -> segment points
+    | 2 -> logarifm points
     | _ -> linear points
 ```
 Аппроксимация линейной функции. 
@@ -115,23 +121,28 @@ let getPointGen (a: double) (b: double) (n: int) =
     let getPoint (i: int) = a + (double i) * mult
     getPoint
 ```
-В результате имеем функцию f(x) = y. Передаем её с генератором в функцию вывода.
+В результате имеем массив пар функций f(x) = y и их id. Передаем его с генератором в функцию вывода.
 ```f#
-let printValues (f: double -> double) (pointGen: int -> double) count =
-    [ 0..count ]
-    |> List.map (fun i -> printfn $"x: %8.4f{pointGen i}, y: %8.4f{f (pointGen i)}")
+let printValues (funcs: ((double -> double) * int)[]) (pointGen: int -> double) count =
+    funcs
+    |> Array.map (fun fWithId ->
+        let f, id = fWithId
+        printfn $"{getFuncName id} : "
+        [ 0..count ]
+        |> List.map (fun i ->
+            printfn $"x: %8.4f{pointGen i}, y: %8.4f{f (pointGen i)}")
+        |> ignore
+
+        printfn "———————————————————————————")
     |> ignore
-    ()
 ```
 ### Использование
-Исходные данные в файле input \
+Входные файлы передаются на std нашей программы и выводится результат для аппроксимации 10 точек от 1 до 6 функцией 0\
 <img src="./img/ФП3-2.png"> \
-Входные файлы передаются на std нашей программы и выводится результат для аппроксимации 10 точек от 1 до 6 функцией 2 (logarifm)\
-<img src="./img/ФП3-1.png"> \
-Пример для использования 2х функции сразу (отрезки и логарифм) \
+Пример для использования 2х функции сразу\
 <img src="./img/ФП3-3.png"> 
 
 ### Выводы 
 В ходе выполнения лабораторной работы я не столкнуся с критическими для меня проблемами. 
-Одим из разочаровывающих моментов было невозможность передать список в аргументах для теста. Поэтому они менее универсальны  
+Одим из разочаровывающих моментов было невозможность передать список в аргументах для теста. Поэтому пришлось передавать строку и обрабатывать её
 
