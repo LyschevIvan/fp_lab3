@@ -2,30 +2,26 @@
 
 open System
 
-let handleInput =
-    let points = List.Empty
 
-    let rec handler pList =
-        let line = Console.ReadLine()
+let rec handleInput pList =
+    let line = Console.ReadLine()
 
-        if (not (isNull line) && line <> "") then
-            let data = line.Split(";")
+    if (not (isNull line) && line <> "") then
+        let data = line.Split(";")
 
-            if data.Length >= 2 then
-                let x = double data[0]
-                let y = double data[1]
+        if data.Length >= 2 then
+            let x = double data[0]
+            let y = double data[1]
 
-                handler (
-                    match pList with
-                    | [] -> [ (x, y) ]
-                    | _ -> (x, y) :: pList
-                )
-            else
-                handler pList
+            match pList with
+            | [] -> [ (x, y) ]
+            | _ -> (x, y) :: pList
+
         else
-            pList
+            handleInput pList
+    else
+        pList
 
-    handler points
 
 let linear points : double -> double =
     let sx = List.fold (fun state (x, _) -> state + x) 0. points
@@ -103,8 +99,15 @@ let printValues (f: double -> double) (pointGen: int -> double) count =
     |> List.map (fun i -> printfn $"x: %8.4f{pointGen i}, y: %8.4f{f (pointGen i)}")
     |> ignore
 
+let rec processOneFuncRec funcId a b n points func =
+    let new_points = handleInput points
 
-let processOneFunc funcId a b n points =
-    let f = getFunc funcId points
-    let pointGen = getPointGen a b n
-    printValues f pointGen n
+    if (new_points <> points) then
+        let f = getFunc funcId points
+        processOneFuncRec funcId a b n new_points f
+    else if (points <> []) then
+        let pointGen = getPointGen a b n
+        printValues func pointGen n
+
+let rec processOneFunc funcId a b n points =
+    processOneFuncRec funcId a b n points (fun _ -> 0.)

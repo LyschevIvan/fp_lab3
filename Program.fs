@@ -1,5 +1,4 @@
 module Program =
-
     open Lab3
 
     [<EntryPoint>]
@@ -14,18 +13,16 @@ module Program =
                 let a = double args[1]
                 let b = double args[2]
                 let n = int args[3]
-                let points = handleInput
-                processOneFunc funcId a b n points
+                processOneFunc funcId a b n []
             else
                 let funcId = args[0]
                 let funcId2 = args[1]
                 let a = double args[2]
                 let b = double args[3]
                 let n = int args[4]
-                let points = handleInput
-                processOneFunc funcId a b n points
+                processOneFunc funcId a b n []
                 printfn ("-------------------------------------")
-                processOneFunc funcId2 a b n points
+                processOneFunc funcId2 a b n []
 
             ()
 
