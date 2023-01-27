@@ -48,6 +48,6 @@ type Lab3Tests(output: ITestOutputHelper) =
         Console.SetIn(File.OpenText(__SOURCE_DIRECTORY__ + @"/testData/" + path))
         let writer = new StringWriter()
         Console.SetOut writer
-        let funcIds = funcStr.Split(" ") |> Array.map int
+        let funcIds = funcStr.Split(" ") |> Array.map int |> List.ofArray
         processFuncs funcIds 10 5
         output.WriteLine(writer.ToString())

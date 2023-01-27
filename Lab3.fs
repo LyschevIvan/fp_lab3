@@ -132,4 +132,4 @@ let rec processFuncsRec (funcIds: int[]) n k points =
     | pts when pts <> points -> processFuncsRec funcIds n k newPoints
     | _ -> ()
 
-let processFuncs funcIds n k = processFuncsRec funcIds n k []
+let processFuncs funcIds n k = processFuncsRec (Array.ofList funcIds) n k []
