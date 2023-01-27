@@ -11,21 +11,21 @@ type Lab3Tests(output: ITestOutputHelper) =
     [<Fact>]
     let ``test linear`` () =
         let points = [ (3., 3.); (2., 2.); (1., 1.); (0., 0.) ]
-        let f = getFunc 0 points
+        let f = linear points
         Assert.Equal(-1., f -1.)
         Assert.Equal(10.3, f 10.3)
 
     [<Fact>]
     let ``test segment`` () =
         let points = [ (3., 4.); (2., 2.); (1., 2.); (0., -1.) ]
-        let f = getFunc 1 points
+        let f = segment points
         Assert.Equal(-1., f -1.)
         Assert.Equal(4., f 10.3)
         Assert.Equal(3., f 2.5)
         Assert.Equal(2., f 1.5)
 
     [<Fact>]
-    let ``test factorial`` () =
+    let ``test log`` () =
         let points =
             [ (11., 14.591581091193483)
               (5., 11.437751649736402)
@@ -33,7 +33,7 @@ type Lab3Tests(output: ITestOutputHelper) =
               (2., 7.772588722239782)
               (1., 5.) ]
 
-        let f = getFunc 1 points
+        let f = logarifm points
         let exp1: double = 14.591581091193483
         Assert.Equal(exp1, f 11, 7)
         let exp2: double = 11.437751649736402
@@ -49,5 +49,5 @@ type Lab3Tests(output: ITestOutputHelper) =
         let writer = new StringWriter()
         Console.SetOut writer
         let funcIds = funcStr.Split(" ") |> Array.map int
-        processFuncs funcIds 1 10 10
+        processFuncs funcIds 10 5
         output.WriteLine(writer.ToString())

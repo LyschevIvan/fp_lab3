@@ -27,4 +27,8 @@
         </PackageReference>
     </ItemGroup>
 
+    <ItemGroup>
+      <EmbeddedResource Remove="img\**" />
+    </ItemGroup>
+
 </Project>

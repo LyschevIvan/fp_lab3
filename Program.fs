@@ -3,13 +3,12 @@ module Program =
 
     [<EntryPoint>]
     let main (args: _[]) =
-        if args.Length < 4 then
-            printfn "Usage: fp_lab3  begin_x end_x point_count func_ids[]"
+        if args.Length < 2 then
+            printfn "Usage: fp_lab3 point_count window func_ids[]"
         else
-            let a = double args[0]
-            let b = double args[1]
-            let n = int args[2]
-            let funcIds = args[3..] |> Array.map int
-            processFuncs funcIds a b n
+            let n = int args[0]
+            let k = int args[1]
+            let funcIds = args[2..] |> Array.map int
+            processFuncs funcIds n k
 
         0

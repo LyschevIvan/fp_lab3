@@ -1,9 +1,9 @@
 ﻿module Lab3
 
 open System
+open Microsoft.FSharp.Collections
 
-
-let rec handleInput pList =
+let rec handleInput k (pList: (double * double) list) =
     let line = Console.ReadLine()
 
     if (not (isNull line) && line <> "") then
@@ -13,17 +13,15 @@ let rec handleInput pList =
             let x = double data[0]
             let y = double data[1]
 
-            match pList with
-            | [] -> [ (x, y) ]
-            | _ -> (x, y) :: pList
-
+            match pList.Length with
+            | 0 -> [ (x, y) ]
+            | _ -> (x, y) :: List.truncate (k - 1) pList
         else
-            handleInput pList
+            handleInput k pList
     else
         pList
 
-
-let linear points : double -> double =
+let linear points =
     let sx = List.fold (fun state (x, _) -> state + x) 0. points
     let sxx = List.fold (fun state (x, _) -> state + x * x) 0. points
     let sy = List.fold (fun state (_, y) -> state + y) 0. points
@@ -34,7 +32,7 @@ let linear points : double -> double =
     let f x = a * x + b
     f
 
-let segment (points: list<double * double>) : double -> double =
+let segment (points: list<double * double>) =
     let rec findBottomBorder i v =
         if i < points.Length then
             let x, _ = points[i]
@@ -68,7 +66,7 @@ let segment (points: list<double * double>) : double -> double =
 
     f
 
-let logarifm (points: list<double * double>) : double -> double =
+let logarifm (points: list<double * double>) =
     let sx = List.fold (fun state (x, _) -> state + log x) 0. points
     let sxx = List.fold (fun state (x, _) -> state + (log x) * (log x)) 0. points
     let sy = List.fold (fun state (_, y) -> state + y) 0. points
@@ -82,43 +80,56 @@ let logarifm (points: list<double * double>) : double -> double =
     let f x = a * log x + b
     f
 
-let getFunc (funcId: int) points : double -> double =
-    match funcId with
-    | 1 -> segment points
-    | 2 -> logarifm points
-    | _ -> linear points
+let getFunc (funcId: int) points =
+    async {
+        match funcId with
+        | 1 -> return segment points
+        | 2 -> return logarifm points
+        | _ -> return linear points
+    }
+
 let getFuncName (funcId: int) : string =
     match funcId with
     | 1 -> "Сегментная аппроксимация"
     | 2 -> "Логарифмическая аппроксимация"
     | _ -> "Линейная аппроксимация"
-let getPointGen (a: double) (b: double) (n: int) =
-    let mult = (b - a) / (double n)
-    let getPoint (i: int) = a + (double i) * mult
-    getPoint
+
+let getPointGen (n: int) points =
+    match points with
+    | (x2, _) :: (x1, _) :: _ ->
+        let mult = (x2 - x1) / (double n)
+        let getPoint (i: int) = x1 + (double i) * mult
+        getPoint
+    | _ -> fun _ -> 0
 
 let printValues (funcs: ((double -> double) * int)[]) (pointGen: int -> double) count =
     funcs
-    |> Array.map (fun fWithId ->
-        let f, id = fWithId
-        printfn $"{getFuncName id} : "
-        [ 0..count ]
-        |> List.map (fun i ->
-            printfn $"x: %8.4f{pointGen i}, y: %8.4f{f (pointGen i)}")
-        |> ignore
+    |> Array.map (fun (_, id) -> $"%-30s{getFuncName id} | ")
+    |> Array.fold (+) ""
+    |> printfn "%s"
 
-        printfn "———————————————————————————")
+    [ 0 .. count - 1 ]
+    |> List.map (fun i ->
+        funcs
+        |> Array.map (fun (f, _) -> $"x: %11.4f{pointGen i}, y: %11.4f{f (pointGen i)} | ")
+        |> Array.fold (+) ""
+        |> printfn "%s")
     |> ignore
 
-let rec processFuncsRec (funcIds: int[]) a b n points (funcs: (double -> double)[]) =
-    let newPoints = handleInput points
+let rec processFuncsRec (funcIds: int[]) n k points =
+    let newPoints = handleInput k points
 
-    if (newPoints <> points) then
-        let funcsArr = funcIds |> Array.map (fun funcId -> getFunc funcId newPoints)
-        processFuncsRec funcIds a b n newPoints funcsArr
-    else if (points <> []) then
-        let pointGen = getPointGen a b n
-        printValues (Array.zip funcs funcIds) pointGen n
+    match newPoints with
+    | pts when pts.Length = k && pts <> points ->
+        let funcsArr =
+            Seq.map (fun funcId -> (getFunc funcId newPoints)) funcIds
+            |> Async.Parallel
+            |> Async.RunSynchronously
 
-let rec processFuncs funcIds a b n =
-    processFuncsRec funcIds a b n [] Array.empty<double -> double>
+        let pointGen = getPointGen n newPoints
+        printValues (Array.zip funcsArr funcIds) pointGen n
+        processFuncsRec funcIds n k newPoints
+    | pts when pts <> points -> processFuncsRec funcIds n k newPoints
+    | _ -> ()
+
+let processFuncs funcIds n k = processFuncsRec funcIds n k []
